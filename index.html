@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Retirement Planner</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+    
+    .content {
+      padding: 40px;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    
+    .form-section {
+      background: #f8f9fa;
+      padding: 25px;
+      border-radius: 15px;
+      border: 1px solid #e9ecef;
+    }
+    
+    .form-section h3 {
+      color: #495057;
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #495057;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      margin-right: 15px;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+      background: #6c757d;
+    }
+    
+    .results {
+      display: none;
+      margin-top: 40px;
+    }
+    
+    .results.show {
+      display: block;
+    }
+    
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .summary-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 25px;
+      border-radius: 15px;
+      text-align: center;
+    }
+    
+    .summary-card h4 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      opacity: 0.9;
+    }
+    
+    .summary-card .value {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    
+    .summary-card.warning {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    }
+    
+    .summary-card.success {
+      background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+    }
+    
+    .charts-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    
+    .chart-container {
+      background: #f8f9fa;
+      padding: 25px;
+      border-radius: 15px;
+      border: 1px solid #e9ecef;
+    }
+    
+    .chart-container h3 {
+      color: #495057;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #e9ecef;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s ease;
+    }
+    
+    .projection-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    
+    .projection-table th,
+    .projection-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .projection-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #495057;
+    }
+    
+    .recommendations {
+      background: #e3f2fd;
+      border: 1px solid #2196f3;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 30px;
+    }
+    
+    .recommendations h3 {
+      color: #1976d2;
+      margin-bottom: 15px;
+    }
+    
+    .recommendations ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    
+    .recommendations li {
+      padding: 8px 0;
+      border-bottom: 1px solid #bbdefb;
+    }
+    
+    .recommendations li:last-child {
+      border-bottom: none;
+    }
+    
+    @media (max-width: 768px) {
+      .charts-section {
+        grid-template-columns: 1fr;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .content {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🏦 Retirement Planner</h1>
+      <p>Plan your financial future with confidence</p>
+    </div>
+    
+    <div class="content">
+      <div class="form-grid">
+        <div class="form-section">
+          <h3>👤 Personal Information</h3>
+          <div class="form-group">
+            <label for="currentAge">Current Age</label>
+            <input type="number" id="currentAge" min="18" max="100" value="30">
+          </div>
+          <div class="form-group">
+            <label for="retirementAge">Retirement Age</label>
+            <input type="number" id="retirementAge" min="45" max="80" value="65">
+          </div>
+          <div class="form-group">
+            <label for="lifeExpectancy">Life Expectancy</label>
+            <input type="number" id="lifeExpectancy" min="70" max="100" value="85">
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h3>💰 Financial Information</h3>
+          <div class="form-group">
+            <label for="currentSavings">Current Savings ($)</label>
+            <input type="number" id="currentSavings" min="0" step="1000" value="50000">
+          </div>
+          <div class="form-group">
+            <label for="monthlyContribution">Monthly Contribution ($)</label>
+            <input type="number" id="monthlyContribution" min="0" step="100" value="1000">
+          </div>
+          <div class="form-group">
+            <label for="expectedReturn">Expected Annual Return (%)</label>
+            <input type="number" id="expectedReturn" min="0" max="20" step="0.1" value="7">
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h3>🎯 Retirement Goals</h3>
+          <div class="form-group">
+            <label for="desiredIncome">Desired Monthly Income ($)</label>
+            <input type="number" id="desiredIncome" min="0" step="1000" value="5000">
+          </div>
+          <div class="form-group">
+            <label for="inflationRate">Expected Inflation Rate (%)</label>
+            <input type="number" id="inflationRate" min="0" max="10" step="0.1" value="2.5">
+          </div>
+          <div class="form-group">
+            <label for="socialSecurity">Expected Social Security ($/month)</label>
+            <input type="number" id="socialSecurity" min="0" step="100" value="1500">
+          </div>
+        </div>
+      </div>
+      
+      <div style="text-align: center;">
+        <button class="btn" onclick="calculateRetirement()">Calculate Retirement Plan</button>
+        <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+      </div>
+      
+      <div id="results" class="results">
+        <div class="summary-cards">
+          <div class="summary-card">
+            <h4>Years to Retirement</h4>
+            <div class="value" id="yearsToRetirement">0</div>
+          </div>
+          <div class="summary-card">
+            <h4>Total Savings at Retirement</h4>
+            <div class="value" id="totalSavings">$0</div>
+          </div>
+          <div class="summary-card" id="goalStatus">
+            <h4>Goal Status</h4>
+            <div class="value" id="goalStatusText">-</div>
+          </div>
+          <div class="summary-card">
+            <h4>Monthly Income Possible</h4>
+            <div class="value" id="monthlyIncomePossible">$0</div>
+          </div>
+        </div>
+        
+        <div class="charts-section">
+          <div class="chart-container">
+            <h3>Savings Progress</h3>
+            <div class="progress-bar">
+              <div class="progress-fill" id="savingsProgress" style="width: 0%"></div>
+            </div>
+            <p>Progress toward retirement goal: <span id="progressPercent">0%</span></p>
+          </div>
+          
+          <div class="chart-container">
+            <h3>Income Sources in Retirement</h3>
+            <div id="incomeBreakdown">
+              <p>Social Security: <span id="socialSecurityAmount">$0</span></p>
+              <p>Investment Income: <span id="investmentIncome">$0</span></p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="chart-container">
+          <h3>Year-by-Year Projection</h3>
+          <table class="projection-table" id="projectionTable">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Age</th>
+                <th>Total Savings</th>
+                <th>Annual Contribution</th>
+                <th>Interest Earned</th>
+              </tr>
+            </thead>
+            <tbody id="projectionBody"></tbody>
+          </table>
+        </div>
+        
+        <div class="recommendations" id="recommendations">
+          <h3>💡 Recommendations</h3>
+          <ul id="recommendationsList"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+    }
+    
+    function calculateCompoundInterest(principal, monthlyContribution, annualRate, years) {
+      const monthlyRate = annualRate / 100 / 12;
+      const months = years * 12;
+      
+      let total = principal;
+      for (let i = 0; i < months; i++) {
+        total = total * (1 + monthlyRate) + monthlyContribution;
+      }
+      
+      return total;
+    }
+    
+    function calculateRequiredSavings(monthlyIncome, retirementYears, inflationRate, expectedReturn) {
+      const inflationRateDecimal = inflationRate / 100;
+      const expectedReturnDecimal = expectedReturn / 100;
+      
+      const realRate = (1 + expectedReturnDecimal) / (1 + inflationRateDecimal) - 1;
+      const monthlyRealRate = realRate / 12;
+      const months = retirementYears * 12;
+      
+      if (realRate === 0) {
+        return monthlyIncome * months;
+      }
+      
+      const requiredSavings = monthlyIncome * (1 - Math.pow(1 + monthlyRealRate, -months)) / monthlyRealRate;
+      return requiredSavings;
+    }
+    
+    function generateProjection(currentSavings, monthlyContribution, expectedReturn, yearsToRetirement) {
+      const projection = [];
+      let currentTotal = currentSavings;
+      
+      for (let year = 1; year <= yearsToRetirement; year++) {
+        const previousTotal = currentTotal;
+        currentTotal = calculateCompoundInterest(currentTotal, monthlyContribution, expectedReturn, 1);
+        const interestEarned = currentTotal - previousTotal - (monthlyContribution * 12);
+        
+        projection.push({
+          year: year,
+          age: parseInt(document.getElementById('currentAge').value) + year,
+          totalSavings: currentTotal,
+          annualContribution: monthlyContribution * 12,
+          interestEarned: interestEarned
+        });
+      }
+      
+      return projection;
+    }
+    
+    function calculateRetirement() {
+      // Get input values
+      const currentAge = parseInt(document.getElementById('currentAge').value);
+      const retirementAge = parseInt(document.getElementById('retirementAge').value);
+      const lifeExpectancy = parseInt(document.getElementById('lifeExpectancy').value);
+      const currentSavings = parseFloat(document.getElementById('currentSavings').value);
+      const monthlyContribution = parseFloat(document.getElementById('monthlyContribution').value);
+      const expectedReturn = parseFloat(document.getElementById('expectedReturn').value);
+      const desiredIncome = parseFloat(document.getElementById('desiredIncome').value);
+      const inflationRate = parseFloat(document.getElementById('inflationRate').value);
+      const socialSecurity = parseFloat(document.getElementById('socialSecurity').value);
+      
+      // Calculate key metrics
+      const yearsToRetirement = retirementAge - currentAge;
+      const retirementYears = lifeExpectancy - retirementAge;
+      
+      if (yearsToRetirement <= 0) {
+        alert('Retirement age must be greater than current age.');
+        return;
+      }
+      
+      // Calculate projected savings
+      const projectedSavings = calculateCompoundInterest(currentSavings, monthlyContribution, expectedReturn, yearsToRetirement);
+      
+      // Calculate required savings
+      const requiredSavings = calculateRequiredSavings(desiredIncome, retirementYears, inflationRate, expectedReturn);
+      
+      // Calculate surplus/deficit
+      const surplusDeficit = projectedSavings - requiredSavings;
+      
+      // Calculate monthly income possible
+      const monthlyIncomePossible = calculateRequiredSavings(1, retirementYears, inflationRate, expectedReturn) > 0 
+        ? projectedSavings / calculateRequiredSavings(1, retirementYears, inflationRate, expectedReturn)
+        : 0;
+      
+      // Update summary cards
+      document.getElementById('yearsToRetirement').textContent = yearsToRetirement;
+      document.getElementById('totalSavings').textContent = formatCurrency(projectedSavings);
+      document.getElementById('monthlyIncomePossible').textContent = formatCurrency(monthlyIncomePossible);
+      
+      // Update goal status
+      const goalStatusCard = document.getElementById('goalStatus');
+      const goalStatusText = document.getElementById('goalStatusText');
+      
+      if (surplusDeficit > 0) {
+        goalStatusText.textContent = 'On Track!';
+        goalStatusCard.className = 'summary-card success';
+      } else {
+        goalStatusText.textContent = 'Needs Attention';
+        goalStatusCard.className = 'summary-card warning';
+      }
+      
+      // Update progress bar
+      const progressPercent = Math.min((projectedSavings / requiredSavings) * 100, 100);
+      document.getElementById('savingsProgress').style.width = progressPercent + '%';
+      document.getElementById('progressPercent').textContent = progressPercent.toFixed(1) + '%';
+      
+      // Update income breakdown
+      document.getElementById('socialSecurityAmount').textContent = formatCurrency(socialSecurity);
+      document.getElementById('investmentIncome').textContent = formatCurrency(monthlyIncomePossible);
+      
+      // Generate projection table
+      const projection = generateProjection(currentSavings, monthlyContribution, expectedReturn, yearsToRetirement);
+      const tbody = document.getElementById('projectionBody');
+      tbody.innerHTML = '';
+      
+      projection.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.year}</td>
+          <td>${item.age}</td>
+          <td>${formatCurrency(item.totalSavings)}</td>
+          <td>${formatCurrency(item.annualContribution)}</td>
+          <td>${formatCurrency(item.interestEarned)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      // Generate recommendations
+      const recommendations = [];
+      
+      if (surplusDeficit < 0) {
+        const shortfall = Math.abs(surplusDeficit);
+        const additionalMonthly = shortfall / (yearsToRetirement * 12);
+        recommendations.push(`Increase monthly contributions by ${formatCurrency(additionalMonthly)} to meet your goal.`);
+      }
+      
+      if (expectedReturn < 6) {
+        recommendations.push('Consider diversifying your investments to potentially increase returns.');
+      }
+      
+      if (monthlyContribution < 1000) {
+        recommendations.push('Try to increase your monthly savings to build wealth faster.');
+      }
+      
+      if (yearsToRetirement > 30) {
+        recommendations.push('You have time on your side - compound interest will work in your favor.');
+      }
+      
+      if (recommendations.length === 0) {
+        recommendations.push('Great job! You are on track for a comfortable retirement.');
+      }
+      
+      const recommendationsList = document.getElementById('recommendationsList');
+      recommendationsList.innerHTML = '';
+      recommendations.forEach(rec => {
+        const li = document.createElement('li');
+        li.textContent = rec;
+        recommendationsList.appendChild(li);
+      });
+      
+      // Show results
+      document.getElementById('results').classList.add('show');
+    }
+    
+    function resetForm() {
+      document.getElementById('currentAge').value = '30';
+      document.getElementById('retirementAge').value = '65';
+      document.getElementById('lifeExpectancy').value = '85';
+      document.getElementById('currentSavings').value = '50000';
+      document.getElementById('monthlyContribution').value = '1000';
+      document.getElementById('expectedReturn').value = '7';
+      document.getElementById('desiredIncome').value = '5000';
+      document.getElementById('inflationRate').value = '2.5';
+      document.getElementById('socialSecurity').value = '1500';
+      
+      document.getElementById('results').classList.remove('show');
+    }
+  </script>
+</body>
+</html>
