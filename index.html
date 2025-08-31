@@ -116,6 +116,121 @@
     .btn-secondary {
       background: #6c757d;
     }
+
+    /* NEW FEATURES: Animation keyframes */
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    /* NEW FEATURES: Dark mode styles */
+    body.dark-mode {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+
+    body.dark-mode .container {
+      background: #2d3748;
+      color: #e2e8f0;
+    }
+
+    body.dark-mode .form-section {
+      background: #4a5568;
+      border-color: #718096;
+    }
+
+    body.dark-mode .form-section h3 {
+      color: #e2e8f0;
+    }
+
+    body.dark-mode label {
+      color: #e2e8f0;
+    }
+
+    body.dark-mode input,
+    body.dark-mode select {
+      background: #4a5568;
+      border-color: #718096;
+      color: #e2e8f0;
+    }
+
+    body.dark-mode .summary-card {
+      background: #4a5568;
+      border-color: #718096;
+    }
+
+    body.dark-mode .summary-card h4 {
+      color: #e2e8f0;
+    }
+
+    body.dark-mode .summary-card p {
+      color: #cbd5e0;
+    }
+
+    /* NEW FEATURES: Additional button styles */
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-success:hover {
+      background: #218838;
+      transform: translateY(-1px);
+    }
+
+    .btn-info {
+      background: #17a2b8;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-info:hover {
+      background: #138496;
+      transform: translateY(-1px);
+    }
     
     .results {
       display: none;
@@ -317,6 +432,11 @@
       <div style="text-align: center;">
         <button class="btn" onclick="calculateRetirement()">Calculate Retirement Plan</button>
         <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+        <button class="btn btn-success" onclick="saveToLocalStorage(); showNotification('Data saved!', 'success')">Save Data</button>
+        <button class="btn btn-info" onclick="exportData(); showNotification('Data exported!', 'success')">Export</button>
+        <button class="btn btn-info" onclick="importData()">Import</button>
+        <button class="btn btn-secondary" onclick="printReport()">Print Report</button>
+        <button class="btn btn-secondary" onclick="toggleDarkMode()">Toggle Dark Mode</button>
       </div>
       
       <div id="results" class="results">
@@ -568,6 +688,233 @@
       
       document.getElementById('results').classList.remove('show');
     }
+
+    // NEW FEATURES: Data Persistence
+    function saveToLocalStorage() {
+      const formData = {
+        currentAge: document.getElementById('currentAge').value,
+        retirementAge: document.getElementById('retirementAge').value,
+        lifeExpectancy: document.getElementById('lifeExpectancy').value,
+        currentSavings: document.getElementById('currentSavings').value,
+        monthlyContribution: document.getElementById('monthlyContribution').value,
+        expectedReturn: document.getElementById('expectedReturn').value,
+        desiredIncome: document.getElementById('desiredIncome').value,
+        inflationRate: document.getElementById('inflationRate').value,
+        socialSecurity: document.getElementById('socialSecurity').value
+      };
+      localStorage.setItem('retirementPlannerData', JSON.stringify(formData));
+    }
+
+    function loadFromLocalStorage() {
+      const savedData = localStorage.getItem('retirementPlannerData');
+      if (savedData) {
+        const formData = JSON.parse(savedData);
+        Object.keys(formData).forEach(key => {
+          const element = document.getElementById(key);
+          if (element) {
+            element.value = formData[key];
+          }
+        });
+      }
+    }
+
+    // NEW FEATURES: Export/Import functionality
+    function exportData() {
+      const formData = {
+        currentAge: document.getElementById('currentAge').value,
+        retirementAge: document.getElementById('retirementAge').value,
+        lifeExpectancy: document.getElementById('lifeExpectancy').value,
+        currentSavings: document.getElementById('currentSavings').value,
+        monthlyContribution: document.getElementById('monthlyContribution').value,
+        expectedReturn: document.getElementById('expectedReturn').value,
+        desiredIncome: document.getElementById('desiredIncome').value,
+        inflationRate: document.getElementById('inflationRate').value,
+        socialSecurity: document.getElementById('socialSecurity').value,
+        exportDate: new Date().toISOString()
+      };
+      
+      const dataStr = JSON.stringify(formData, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'retirement-plan.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            try {
+              const formData = JSON.parse(e.target.result);
+              Object.keys(formData).forEach(key => {
+                const element = document.getElementById(key);
+                if (element && key !== 'exportDate') {
+                  element.value = formData[key];
+                }
+              });
+              alert('Data imported successfully!');
+            } catch (error) {
+              alert('Error importing data. Please check the file format.');
+            }
+          };
+          reader.readAsText(file);
+        }
+      };
+      input.click();
+    }
+
+    // NEW FEATURES: Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+          case 'Enter':
+            e.preventDefault();
+            calculateRetirement();
+            break;
+          case 's':
+            e.preventDefault();
+            saveToLocalStorage();
+            showNotification('Data saved!');
+            break;
+          case 'r':
+            e.preventDefault();
+            resetForm();
+            showNotification('Form reset!');
+            break;
+        }
+      }
+    });
+
+    // NEW FEATURES: Auto-save on input change
+    document.querySelectorAll('input, select').forEach(element => {
+      element.addEventListener('change', saveToLocalStorage);
+    });
+
+    // NEW FEATURES: Notification system
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    // NEW FEATURES: Print functionality
+    function printReport() {
+      const printWindow = window.open('', '_blank');
+      const currentData = {
+        currentAge: document.getElementById('currentAge').value,
+        retirementAge: document.getElementById('retirementAge').value,
+        yearsToRetirement: document.getElementById('yearsToRetirement').textContent,
+        totalSavings: document.getElementById('totalSavings').textContent,
+        monthlyIncomePossible: document.getElementById('monthlyIncomePossible').textContent,
+        goalStatus: document.getElementById('goalStatusText').textContent
+      };
+      
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Retirement Plan Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+              .section { margin-bottom: 30px; }
+              .data-row { display: flex; justify-content: space-between; margin: 10px 0; }
+              .highlight { background: #f0f0f0; padding: 10px; border-radius: 5px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>Retirement Plan Report</h1>
+              <p>Generated on ${new Date().toLocaleDateString()}</p>
+            </div>
+            <div class="section">
+              <h2>Your Plan Summary</h2>
+              <div class="data-row">
+                <strong>Current Age:</strong> ${currentData.currentAge}
+              </div>
+              <div class="data-row">
+                <strong>Retirement Age:</strong> ${currentData.retirementAge}
+              </div>
+              <div class="data-row">
+                <strong>Years to Retirement:</strong> ${currentData.yearsToRetirement}
+              </div>
+            </div>
+            <div class="section">
+              <h2>Financial Projections</h2>
+              <div class="highlight">
+                <div class="data-row">
+                  <strong>Projected Total Savings:</strong> ${currentData.totalSavings}
+                </div>
+                <div class="data-row">
+                  <strong>Monthly Income Possible:</strong> ${currentData.monthlyIncomePossible}
+                </div>
+                <div class="data-row">
+                  <strong>Goal Status:</strong> ${currentData.goalStatus}
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+
+    // NEW FEATURES: Dark mode toggle
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('darkMode', isDark);
+      
+      if (isDark) {
+        document.body.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
+        document.querySelector('.container').style.background = '#2d3748';
+        document.querySelector('.container').style.color = '#e2e8f0';
+      } else {
+        document.body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        document.querySelector('.container').style.background = 'white';
+        document.querySelector('.container').style.color = '#333';
+      }
+    }
+
+    // NEW FEATURES: Initialize app
+    window.addEventListener('load', function() {
+      loadFromLocalStorage();
+      
+      // Load dark mode preference
+      const darkMode = localStorage.getItem('darkMode') === 'true';
+      if (darkMode) {
+        toggleDarkMode();
+      }
+      
+      showNotification('Welcome to Retirement Planner! Use Ctrl+Enter to calculate, Ctrl+S to save.', 'success');
+    });
   </script>
 </body>
 </html>
