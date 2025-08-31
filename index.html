@@ -399,32 +399,40 @@
         <div class="form-section">
           <h3>💰 Financial Information</h3>
           <div class="form-group">
-            <label for="currentSavings">Current Savings ($)</label>
-            <input type="number" id="currentSavings" min="0" step="1000" value="50000">
+            <label for="currentIncome">Current Monthly Income (₹)</label>
+            <input type="number" id="currentIncome" min="0" step="1000" value="50000" placeholder="Enter your monthly salary">
           </div>
           <div class="form-group">
-            <label for="monthlyContribution">Monthly Contribution ($)</label>
-            <input type="number" id="monthlyContribution" min="0" step="100" value="1000">
+            <label for="currentSavings">Current Savings (₹)</label>
+            <input type="number" id="currentSavings" min="0" step="10000" value="500000" placeholder="Total savings in bank/FDs">
+          </div>
+          <div class="form-group">
+            <label for="monthlySavings">Monthly Savings/Investments (₹)</label>
+            <input type="number" id="monthlySavings" min="0" step="1000" value="15000" placeholder="Monthly SIP/PPF/RD amount">
+          </div>
+          <div class="form-group">
+            <label for="numberOfDependents">Number of Dependents</label>
+            <input type="number" id="numberOfDependents" min="0" max="10" value="2" placeholder="Family members dependent on you">
           </div>
           <div class="form-group">
             <label for="expectedReturn">Expected Annual Return (%)</label>
-            <input type="number" id="expectedReturn" min="0" max="20" step="0.1" value="7">
+            <input type="number" id="expectedReturn" min="0" max="20" step="0.1" value="12" placeholder="Expected return on investments">
           </div>
         </div>
         
         <div class="form-section">
           <h3>🎯 Retirement Goals</h3>
           <div class="form-group">
-            <label for="desiredIncome">Desired Monthly Income ($)</label>
-            <input type="number" id="desiredIncome" min="0" step="1000" value="5000">
+            <label for="desiredIncome">Desired Monthly Income (₹)</label>
+            <input type="number" id="desiredIncome" min="0" step="1000" value="75000" placeholder="Monthly income needed after retirement">
           </div>
           <div class="form-group">
             <label for="inflationRate">Expected Inflation Rate (%)</label>
-            <input type="number" id="inflationRate" min="0" max="10" step="0.1" value="2.5">
+            <input type="number" id="inflationRate" min="0" max="10" step="0.1" value="6" placeholder="Expected inflation rate in India">
           </div>
           <div class="form-group">
-            <label for="socialSecurity">Expected Social Security ($/month)</label>
-            <input type="number" id="socialSecurity" min="0" step="100" value="1500">
+            <label for="pensionIncome">Expected Pension/EPF (₹/month)</label>
+            <input type="number" id="pensionIncome" min="0" step="1000" value="25000" placeholder="Monthly pension/EPF amount">
           </div>
         </div>
       </div>
@@ -471,8 +479,8 @@
           <div class="chart-container">
             <h3>Income Sources in Retirement</h3>
             <div id="incomeBreakdown">
-              <p>Social Security: <span id="socialSecurityAmount">$0</span></p>
-              <p>Investment Income: <span id="investmentIncome">$0</span></p>
+              <p>Pension/EPF: <span id="socialSecurityAmount">₹0</span></p>
+              <p>Investment Income: <span id="investmentIncome">₹0</span></p>
             </div>
           </div>
         </div>
@@ -503,9 +511,9 @@
 
   <script>
     function formatCurrency(amount) {
-      return new Intl.NumberFormat('en-US', {
+      return new Intl.NumberFormat('en-IN', {
         style: 'currency',
-        currency: 'USD',
+        currency: 'INR',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
       }).format(amount);
@@ -565,12 +573,14 @@
       const currentAge = parseInt(document.getElementById('currentAge').value);
       const retirementAge = parseInt(document.getElementById('retirementAge').value);
       const lifeExpectancy = parseInt(document.getElementById('lifeExpectancy').value);
+      const currentIncome = parseFloat(document.getElementById('currentIncome').value);
       const currentSavings = parseFloat(document.getElementById('currentSavings').value);
-      const monthlyContribution = parseFloat(document.getElementById('monthlyContribution').value);
+      const monthlySavings = parseFloat(document.getElementById('monthlySavings').value);
+      const numberOfDependents = parseInt(document.getElementById('numberOfDependents').value);
       const expectedReturn = parseFloat(document.getElementById('expectedReturn').value);
       const desiredIncome = parseFloat(document.getElementById('desiredIncome').value);
       const inflationRate = parseFloat(document.getElementById('inflationRate').value);
-      const socialSecurity = parseFloat(document.getElementById('socialSecurity').value);
+      const pensionIncome = parseFloat(document.getElementById('pensionIncome').value);
       
       // Calculate key metrics
       const yearsToRetirement = retirementAge - currentAge;
@@ -582,7 +592,7 @@
       }
       
       // Calculate projected savings
-      const projectedSavings = calculateCompoundInterest(currentSavings, monthlyContribution, expectedReturn, yearsToRetirement);
+      const projectedSavings = calculateCompoundInterest(currentSavings, monthlySavings, expectedReturn, yearsToRetirement);
       
       // Calculate required savings
       const requiredSavings = calculateRequiredSavings(desiredIncome, retirementYears, inflationRate, expectedReturn);
@@ -618,11 +628,11 @@
       document.getElementById('progressPercent').textContent = progressPercent.toFixed(1) + '%';
       
       // Update income breakdown
-      document.getElementById('socialSecurityAmount').textContent = formatCurrency(socialSecurity);
+      document.getElementById('socialSecurityAmount').textContent = formatCurrency(pensionIncome);
       document.getElementById('investmentIncome').textContent = formatCurrency(monthlyIncomePossible);
       
       // Generate projection table
-      const projection = generateProjection(currentSavings, monthlyContribution, expectedReturn, yearsToRetirement);
+      const projection = generateProjection(currentSavings, monthlySavings, expectedReturn, yearsToRetirement);
       const tbody = document.getElementById('projectionBody');
       tbody.innerHTML = '';
       
@@ -647,12 +657,20 @@
         recommendations.push(`Increase monthly contributions by ${formatCurrency(additionalMonthly)} to meet your goal.`);
       }
       
-      if (expectedReturn < 6) {
-        recommendations.push('Consider diversifying your investments to potentially increase returns.');
+      if (expectedReturn < 8) {
+        recommendations.push('Consider diversifying into equity mutual funds, PPF, and NPS for better returns.');
       }
       
-      if (monthlyContribution < 1000) {
-        recommendations.push('Try to increase your monthly savings to build wealth faster.');
+      if (monthlySavings < currentIncome * 0.2) {
+        recommendations.push('Try to save at least 20% of your income. Consider SIPs in mutual funds.');
+      }
+      
+      if (numberOfDependents > 3) {
+        recommendations.push('With more dependents, consider increasing your life insurance coverage.');
+      }
+      
+      if (currentSavings < currentIncome * 6) {
+        recommendations.push('Build an emergency fund of at least 6 months of your income.');
       }
       
       if (yearsToRetirement > 30) {
@@ -679,12 +697,14 @@
       document.getElementById('currentAge').value = '30';
       document.getElementById('retirementAge').value = '65';
       document.getElementById('lifeExpectancy').value = '85';
-      document.getElementById('currentSavings').value = '50000';
-      document.getElementById('monthlyContribution').value = '1000';
-      document.getElementById('expectedReturn').value = '7';
-      document.getElementById('desiredIncome').value = '5000';
-      document.getElementById('inflationRate').value = '2.5';
-      document.getElementById('socialSecurity').value = '1500';
+      document.getElementById('currentIncome').value = '50000';
+      document.getElementById('currentSavings').value = '500000';
+      document.getElementById('monthlySavings').value = '15000';
+      document.getElementById('numberOfDependents').value = '2';
+      document.getElementById('expectedReturn').value = '12';
+      document.getElementById('desiredIncome').value = '75000';
+      document.getElementById('inflationRate').value = '6';
+      document.getElementById('pensionIncome').value = '25000';
       
       document.getElementById('results').classList.remove('show');
     }
@@ -695,12 +715,14 @@
         currentAge: document.getElementById('currentAge').value,
         retirementAge: document.getElementById('retirementAge').value,
         lifeExpectancy: document.getElementById('lifeExpectancy').value,
+        currentIncome: document.getElementById('currentIncome').value,
         currentSavings: document.getElementById('currentSavings').value,
-        monthlyContribution: document.getElementById('monthlyContribution').value,
+        monthlySavings: document.getElementById('monthlySavings').value,
+        numberOfDependents: document.getElementById('numberOfDependents').value,
         expectedReturn: document.getElementById('expectedReturn').value,
         desiredIncome: document.getElementById('desiredIncome').value,
         inflationRate: document.getElementById('inflationRate').value,
-        socialSecurity: document.getElementById('socialSecurity').value
+        pensionIncome: document.getElementById('pensionIncome').value
       };
       localStorage.setItem('retirementPlannerData', JSON.stringify(formData));
     }
@@ -724,12 +746,14 @@
         currentAge: document.getElementById('currentAge').value,
         retirementAge: document.getElementById('retirementAge').value,
         lifeExpectancy: document.getElementById('lifeExpectancy').value,
+        currentIncome: document.getElementById('currentIncome').value,
         currentSavings: document.getElementById('currentSavings').value,
-        monthlyContribution: document.getElementById('monthlyContribution').value,
+        monthlySavings: document.getElementById('monthlySavings').value,
+        numberOfDependents: document.getElementById('numberOfDependents').value,
         expectedReturn: document.getElementById('expectedReturn').value,
         desiredIncome: document.getElementById('desiredIncome').value,
         inflationRate: document.getElementById('inflationRate').value,
-        socialSecurity: document.getElementById('socialSecurity').value,
+        pensionIncome: document.getElementById('pensionIncome').value,
         exportDate: new Date().toISOString()
       };
       
