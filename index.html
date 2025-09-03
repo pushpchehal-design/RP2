@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Retirement Planner</title>
+      <title>Retirement Planner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -379,6 +380,25 @@
     </div>
     
     <div class="content">
+      <div class="form-section" style="margin-bottom: 30px; text-align: center;">
+        <h3>🌍 Select Your Country</h3>
+        <div class="form-group" style="max-width: 300px; margin: 0 auto;">
+          <label for="countrySelect">Country</label>
+          <select id="countrySelect" onchange="changeCountry()">
+            <option value="IN">India</option>
+            <option value="US">United States</option>
+            <option value="UK">United Kingdom</option>
+            <option value="CA">Canada</option>
+            <option value="AU">Australia</option>
+            <option value="DE">Germany</option>
+            <option value="FR">France</option>
+            <option value="JP">Japan</option>
+            <option value="SG">Singapore</option>
+            <option value="AE">UAE</option>
+          </select>
+        </div>
+      </div>
+
       <div class="form-grid">
         <div class="form-section">
           <h3>👤 Personal Information</h3>
@@ -441,7 +461,8 @@
         <button class="btn" onclick="calculateRetirement()">Calculate Retirement Plan</button>
         <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
         <button class="btn btn-success" onclick="saveToLocalStorage(); showNotification('Data saved!', 'success')">Save Data</button>
-        <button class="btn btn-info" onclick="exportData(); showNotification('Data exported!', 'success')">Export</button>
+        <button class="btn btn-info" onclick="exportData(); showNotification('Data exported!', 'success')">Export JSON</button>
+        <button class="btn btn-success" onclick="exportToExcel(); showNotification('Excel file exported!', 'success')">Export to Excel</button>
         <button class="btn btn-info" onclick="importData()">Import</button>
         <button class="btn btn-secondary" onclick="printReport()">Print Report</button>
         <button class="btn btn-secondary" onclick="toggleDarkMode()">Toggle Dark Mode</button>
@@ -455,7 +476,7 @@
           </div>
           <div class="summary-card">
             <h4>Total Savings at Retirement</h4>
-            <div class="value" id="totalSavings">$0</div>
+            <div class="value" id="totalSavings">₹0</div>
           </div>
           <div class="summary-card" id="goalStatus">
             <h4>Goal Status</h4>
@@ -463,7 +484,27 @@
           </div>
           <div class="summary-card">
             <h4>Monthly Income Possible</h4>
-            <div class="value" id="monthlyIncomePossible">$0</div>
+            <div class="value" id="monthlyIncomePossible">₹0</div>
+          </div>
+        </div>
+
+        <!-- NEW: Savings Gap Analysis -->
+        <div id="savingsGapAnalysis" style="display: none; margin: 30px 0;">
+          <div class="chart-container" style="border: 2px solid #dc2626; background: #fef2f2;">
+            <h3 style="color: #dc2626;">⚠️ Savings Gap Analysis</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+              <div>
+                <h4 style="color: #dc2626;">Current Gap</h4>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #dc2626;" id="savingsGap">₹0</div>
+              </div>
+              <div>
+                <h4 style="color: #dc2626;">Required Monthly Increase</h4>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #dc2626;" id="requiredIncrease">₹0</div>
+              </div>
+            </div>
+            <p style="color: #dc2626; font-weight: 600;">
+              💡 <strong>Action Required:</strong> Increase your monthly savings by the amount shown above to reach your retirement goal.
+            </p>
           </div>
         </div>
         
@@ -494,7 +535,7 @@
                 <th>Age</th>
                 <th>Total Savings</th>
                 <th>Annual Contribution</th>
-                <th>Interest Earned</th>
+                <th>Annual Returns</th>
               </tr>
             </thead>
             <tbody id="projectionBody"></tbody>
@@ -510,13 +551,183 @@
   </div>
 
   <script>
-    function formatCurrency(amount) {
-      return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
+    // Country Configuration Data
+    const countryConfig = {
+      IN: {
+        name: 'India',
         currency: 'INR',
+        symbol: '₹',
+        locale: 'en-IN',
+        inflationRate: 6.0,
+        expectedReturn: 12.0,
+        defaultIncome: 50000,
+        defaultSavings: 500000,
+        defaultMonthlySavings: 15000,
+        defaultDesiredIncome: 75000,
+        defaultPension: 25000
+      },
+      US: {
+        name: 'United States',
+        currency: 'USD',
+        symbol: '$',
+        locale: 'en-US',
+        inflationRate: 2.5,
+        expectedReturn: 7.0,
+        defaultIncome: 5000,
+        defaultSavings: 50000,
+        defaultMonthlySavings: 1000,
+        defaultDesiredIncome: 5000,
+        defaultPension: 1500
+      },
+      UK: {
+        name: 'United Kingdom',
+        currency: 'GBP',
+        symbol: '£',
+        locale: 'en-GB',
+        inflationRate: 3.0,
+        expectedReturn: 6.5,
+        defaultIncome: 3000,
+        defaultSavings: 30000,
+        defaultMonthlySavings: 800,
+        defaultDesiredIncome: 3000,
+        defaultPension: 1200
+      },
+      CA: {
+        name: 'Canada',
+        currency: 'CAD',
+        symbol: 'C$',
+        locale: 'en-CA',
+        inflationRate: 2.8,
+        expectedReturn: 6.8,
+        defaultIncome: 4000,
+        defaultSavings: 40000,
+        defaultMonthlySavings: 900,
+        defaultDesiredIncome: 4000,
+        defaultPension: 1300
+      },
+      AU: {
+        name: 'Australia',
+        currency: 'AUD',
+        symbol: 'A$',
+        locale: 'en-AU',
+        inflationRate: 2.9,
+        expectedReturn: 7.2,
+        defaultIncome: 4500,
+        defaultSavings: 45000,
+        defaultMonthlySavings: 950,
+        defaultDesiredIncome: 4500,
+        defaultPension: 1400
+      },
+      DE: {
+        name: 'Germany',
+        currency: 'EUR',
+        symbol: '€',
+        locale: 'de-DE',
+        inflationRate: 2.1,
+        expectedReturn: 5.5,
+        defaultIncome: 3500,
+        defaultSavings: 35000,
+        defaultMonthlySavings: 750,
+        defaultDesiredIncome: 3500,
+        defaultPension: 1100
+      },
+      FR: {
+        name: 'France',
+        currency: 'EUR',
+        symbol: '€',
+        locale: 'fr-FR',
+        inflationRate: 2.3,
+        expectedReturn: 5.8,
+        defaultIncome: 3200,
+        defaultSavings: 32000,
+        defaultMonthlySavings: 700,
+        defaultDesiredIncome: 3200,
+        defaultPension: 1000
+      },
+      JP: {
+        name: 'Japan',
+        currency: 'JPY',
+        symbol: '¥',
+        locale: 'ja-JP',
+        inflationRate: 1.2,
+        expectedReturn: 4.5,
+        defaultIncome: 300000,
+        defaultSavings: 3000000,
+        defaultMonthlySavings: 60000,
+        defaultDesiredIncome: 300000,
+        defaultPension: 80000
+      },
+      SG: {
+        name: 'Singapore',
+        currency: 'SGD',
+        symbol: 'S$',
+        locale: 'en-SG',
+        inflationRate: 2.8,
+        expectedReturn: 6.5,
+        defaultIncome: 4000,
+        defaultSavings: 40000,
+        defaultMonthlySavings: 900,
+        defaultDesiredIncome: 4000,
+        defaultPension: 1300
+      },
+      AE: {
+        name: 'UAE',
+        currency: 'AED',
+        symbol: 'د.إ',
+        locale: 'ar-AE',
+        inflationRate: 2.5,
+        expectedReturn: 6.0,
+        defaultIncome: 8000,
+        defaultSavings: 80000,
+        defaultMonthlySavings: 1500,
+        defaultDesiredIncome: 8000,
+        defaultPension: 2000
+      }
+    };
+
+    let currentCountry = 'IN';
+
+    function formatCurrency(amount) {
+      const config = countryConfig[currentCountry];
+      return new Intl.NumberFormat(config.locale, {
+        style: 'currency',
+        currency: config.currency,
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
       }).format(amount);
+    }
+
+    function changeCountry() {
+      const countryCode = document.getElementById('countrySelect').value;
+      currentCountry = countryCode;
+      const config = countryConfig[countryCode];
+      
+      // Update form values based on country
+      document.getElementById('inflationRate').value = config.inflationRate;
+      document.getElementById('expectedReturn').value = config.expectedReturn;
+      document.getElementById('currentIncome').value = config.defaultIncome;
+      document.getElementById('currentSavings').value = config.defaultSavings;
+      document.getElementById('monthlySavings').value = config.defaultMonthlySavings;
+      document.getElementById('desiredIncome').value = config.defaultDesiredIncome;
+      document.getElementById('pensionIncome').value = config.defaultPension;
+      
+      // Update labels to show new currency
+      updateCurrencyLabels();
+      
+      // Show notification
+      showNotification(`Switched to ${config.name} (${config.currency})`, 'success');
+    }
+
+    function updateCurrencyLabels() {
+      const config = countryConfig[currentCountry];
+      const symbol = config.symbol;
+      
+      // Update all currency labels
+      document.querySelector('label[for="currentIncome"]').textContent = `Current Monthly Income (${symbol})`;
+      document.querySelector('label[for="currentSavings"]').textContent = `Current Savings (${symbol})`;
+      document.querySelector('label[for="monthlySavings"]').textContent = `Monthly Savings/Investments (${symbol})`;
+      document.querySelector('label[for="desiredIncome"]').textContent = `Desired Monthly Income (${symbol})`;
+      document.querySelector('label[for="pensionIncome"]').textContent = `Expected Pension/EPF (${symbol}/month)`;
     }
     
     function calculateCompoundInterest(principal, monthlyContribution, annualRate, years) {
@@ -554,14 +765,14 @@
       for (let year = 1; year <= yearsToRetirement; year++) {
         const previousTotal = currentTotal;
         currentTotal = calculateCompoundInterest(currentTotal, monthlyContribution, expectedReturn, 1);
-        const interestEarned = currentTotal - previousTotal - (monthlyContribution * 12);
+        const annualReturns = currentTotal - previousTotal - (monthlyContribution * 12);
         
         projection.push({
           year: year,
           age: parseInt(document.getElementById('currentAge').value) + year,
           totalSavings: currentTotal,
           annualContribution: monthlyContribution * 12,
-          interestEarned: interestEarned
+          annualReturns: annualReturns
         });
       }
       
@@ -643,7 +854,7 @@
           <td>${item.age}</td>
           <td>${formatCurrency(item.totalSavings)}</td>
           <td>${formatCurrency(item.annualContribution)}</td>
-          <td>${formatCurrency(item.interestEarned)}</td>
+          <td>${formatCurrency(item.annualReturns)}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -651,10 +862,21 @@
       // Generate recommendations
       const recommendations = [];
       
+      // Show savings gap analysis if there's a shortfall
+      const savingsGapAnalysis = document.getElementById('savingsGapAnalysis');
       if (surplusDeficit < 0) {
         const shortfall = Math.abs(surplusDeficit);
         const additionalMonthly = shortfall / (yearsToRetirement * 12);
+        
+        // Display the gap analysis
+        document.getElementById('savingsGap').textContent = formatCurrency(shortfall);
+        document.getElementById('requiredIncrease').textContent = formatCurrency(additionalMonthly);
+        savingsGapAnalysis.style.display = 'block';
+        
         recommendations.push(`Increase monthly contributions by ${formatCurrency(additionalMonthly)} to meet your goal.`);
+      } else {
+        // Hide gap analysis if on track
+        savingsGapAnalysis.style.display = 'none';
       }
       
       if (expectedReturn < 8) {
@@ -707,6 +929,7 @@
       document.getElementById('pensionIncome').value = '25000';
       
       document.getElementById('results').classList.remove('show');
+      document.getElementById('savingsGapAnalysis').style.display = 'none';
     }
 
     // NEW FEATURES: Data Persistence
@@ -793,6 +1016,96 @@
         }
       };
       input.click();
+    }
+
+    function exportToExcel() {
+      // Get current form data
+      const currentAge = document.getElementById('currentAge').value;
+      const retirementAge = document.getElementById('retirementAge').value;
+      const currentIncome = document.getElementById('currentIncome').value;
+      const currentSavings = document.getElementById('currentSavings').value;
+      const monthlySavings = document.getElementById('monthlySavings').value;
+      const numberOfDependents = document.getElementById('numberOfDependents').value;
+      const expectedReturn = document.getElementById('expectedReturn').value;
+      const desiredIncome = document.getElementById('desiredIncome').value;
+      const inflationRate = document.getElementById('inflationRate').value;
+      const pensionIncome = document.getElementById('pensionIncome').value;
+      
+      // Get results if available
+      const yearsToRetirement = document.getElementById('yearsToRetirement').textContent;
+      const totalSavings = document.getElementById('totalSavings').textContent;
+      const goalStatus = document.getElementById('goalStatusText').textContent;
+      const monthlyIncomePossible = document.getElementById('monthlyIncomePossible').textContent;
+      
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      
+      // Personal Information Sheet
+      const personalData = [
+        ['Retirement Plan Report', ''],
+        ['Generated on', new Date().toLocaleDateString()],
+        ['Country', countryConfig[currentCountry].name],
+        ['', ''],
+        ['Personal Information', ''],
+        ['Current Age', currentAge],
+        ['Retirement Age', retirementAge],
+        ['Years to Retirement', yearsToRetirement],
+        ['Number of Dependents', numberOfDependents],
+        ['', ''],
+        ['Financial Information', ''],
+        ['Current Monthly Income', currentIncome],
+        ['Current Savings', currentSavings],
+        ['Monthly Savings/Investments', monthlySavings],
+        ['Expected Annual Return (%)', expectedReturn],
+        ['', ''],
+        ['Retirement Goals', ''],
+        ['Desired Monthly Income', desiredIncome],
+        ['Expected Inflation Rate (%)', inflationRate],
+        ['Expected Pension/EPF', pensionIncome]
+      ];
+      
+      const personalWs = XLSX.utils.aoa_to_sheet(personalData);
+      XLSX.utils.book_append_sheet(wb, personalWs, 'Personal Info');
+      
+      // Results Sheet
+      const resultsData = [
+        ['Retirement Analysis Results', ''],
+        ['', ''],
+        ['Summary', ''],
+        ['Total Savings at Retirement', totalSavings],
+        ['Monthly Income Possible', monthlyIncomePossible],
+        ['Goal Status', goalStatus],
+        ['', ''],
+        ['Recommendations', ''],
+        ['Country-Specific Notes', `Based on ${countryConfig[currentCountry].name} data`],
+        ['Inflation Rate', `${inflationRate}%`],
+        ['Expected Returns', `${expectedReturn}%`]
+      ];
+      
+      const resultsWs = XLSX.utils.aoa_to_sheet(resultsData);
+      XLSX.utils.book_append_sheet(wb, resultsWs, 'Results');
+      
+      // Projection Sheet (if available)
+      const projectionTable = document.getElementById('projectionBody');
+      if (projectionTable.rows.length > 0) {
+        const projectionData = [['Year', 'Age', 'Total Savings', 'Annual Contribution', 'Annual Returns']];
+        
+        for (let i = 0; i < projectionTable.rows.length; i++) {
+          const row = projectionTable.rows[i];
+          const rowData = [];
+          for (let j = 0; j < row.cells.length; j++) {
+            rowData.push(row.cells[j].textContent);
+          }
+          projectionData.push(rowData);
+        }
+        
+        const projectionWs = XLSX.utils.aoa_to_sheet(projectionData);
+        XLSX.utils.book_append_sheet(wb, projectionWs, 'Yearly Projection');
+      }
+      
+      // Save the file
+      const fileName = `Retirement_Plan_${countryConfig[currentCountry].name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
     }
 
     // NEW FEATURES: Keyboard shortcuts
@@ -936,6 +1249,9 @@
       if (darkMode) {
         toggleDarkMode();
       }
+      
+      // Initialize country-specific settings
+      updateCurrencyLabels();
       
       showNotification('Welcome to Retirement Planner! Use Ctrl+Enter to calculate, Ctrl+S to save.', 'success');
     });
